@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { toPng } from 'html-to-image'
 
 type ChildInfo = {
   birthDate: string
@@ -26,7 +27,12 @@ type IngredientForm = {
   status: Ingredient['status']
 }
 
-type Page = 'home' | 'child-info' | 'meal-settings' | 'result' | 'fridge'
+type AiMealPlan = {
+  shoppingList: string[]
+  menus: Array<{ day: number; menu: string }>
+}
+
+type Page = 'home' | 'child-info' | 'meal-settings' | 'result' | 'fridge' | 'ai-meal-plan'
 
 const initialChildInfo: ChildInfo = {
   birthDate: '',
@@ -56,6 +62,7 @@ const inputBase =
 const fieldLabel = 'mb-1.5 block text-sm font-bold text-cocoa'
 
 function App() {
+  const aiResultRef = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState<Page>('home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [childInfo, setChildInfo] = useState<ChildInfo>(initialChildInfo)
@@ -69,6 +76,11 @@ function App() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingChildInfo, setEditingChildInfo] = useState(false)
   const [notification, setNotification] = useState('')
+  const [aiMealPlan, setAiMealPlan] = useState<AiMealPlan | null>(null)
+  const [isAiLoading, setIsAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 
   const handleChildInfoChange =
     (key: keyof ChildInfo) =>
@@ -148,6 +160,62 @@ function App() {
     setFridgeItems((prev) => prev.filter((item) => item.id !== id))
   }
 
+  const handleGenerateAiMealPlan = async () => {
+    setIsAiLoading(true)
+    setAiError('')
+    try {
+      const response = await fetch(`${apiBaseUrl}/ai/meal-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          childInfo,
+          mealSettings,
+          fridgeItems,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null)
+        const message =
+          errorPayload?.message ??
+          'AI 식단 생성에 실패했습니다. 잠시 후 다시 시도해주세요.'
+        throw new Error(message)
+      }
+
+      const payload = (await response.json()) as Partial<AiMealPlan>
+      setAiMealPlan({
+        shoppingList: Array.isArray(payload.shoppingList) ? payload.shoppingList : [],
+        menus: Array.isArray(payload.menus) ? payload.menus : [],
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'AI 식단 생성에 실패했습니다. 잠시 후 다시 시도해주세요.'
+      setAiError(message)
+    } finally {
+      setIsAiLoading(false)
+    }
+  }
+
+  const handleSaveMealPlanImage = async () => {
+    if (!aiResultRef.current) return
+    try {
+      const dataUrl = await toPng(aiResultRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+      })
+      const link = document.createElement('a')
+      link.download = `meal-plan-${Date.now()}.png`
+      link.href = dataUrl
+      link.click()
+    } catch {
+      setAiError('이미지 저장에 실패했습니다. 다시 시도해주세요.')
+    }
+  }
+
   const getStatusLabel = (status: Ingredient['status']) => {
     const labels = {
       fresh: '🌱 신선함',
@@ -219,6 +287,16 @@ function App() {
               className="w-full rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-cocoa-strong transition hover:bg-blush"
             >
               🧺 식재료 관리
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPage('ai-meal-plan')
+                setIsMenuOpen(false)
+              }}
+              className="w-full rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-cocoa-strong transition hover:bg-blush"
+            >
+              🤖 AI 식단 생성
             </button>
           </div>
         </div>
@@ -442,6 +520,8 @@ function App() {
               setMealSettings(initialMealSettings)
               setSaved(null)
               setFridgeItems([])
+              setAiMealPlan(null)
+              setAiError('')
             }}
             className={`mt-4 w-full ${btnPrimary}`}
           >
@@ -564,6 +644,127 @@ function App() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPage('meal-settings')}
+              className={`flex-1 ${btnGhost}`}
+            >
+              뒤로
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPage('ai-meal-plan')
+                void handleGenerateAiMealPlan()
+              }}
+              className={`flex-1 ${btnPrimary}`}
+            >
+              다음: AI 식단 생성 🤖
+            </button>
+          </div>
+        </div>
+      )}
+
+      {page === 'ai-meal-plan' && (
+        <div>
+          <h1 className="mb-5 flex items-center gap-2 text-3xl font-extrabold">
+            <span>🤖</span> AI 식단 제안
+          </h1>
+
+          {isAiLoading && (
+            <div className="rounded-2xl bg-cream px-4 py-8 text-center text-cocoa-strong">
+              AI가 아이 식단을 만들고 있어요...
+            </div>
+          )}
+
+          {!isAiLoading && aiError && (
+            <div className="space-y-3 rounded-2xl border-2 border-rose bg-rose px-4 py-4 text-rose-ink">
+              <p className="font-bold">{aiError}</p>
+              <button
+                type="button"
+                onClick={() => void handleGenerateAiMealPlan()}
+                className={`w-full ${btnPrimary}`}
+              >
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {!isAiLoading && !aiError && aiMealPlan && (
+            <div className="space-y-4">
+              <div
+                ref={aiResultRef}
+                className="rounded-2xl border-2 border-butter bg-cream p-5"
+              >
+                <h2 className="mb-3 text-lg font-extrabold">🛒 장보기 리스트</h2>
+                {aiMealPlan.shoppingList.length === 0 ? (
+                  <p className="text-cocoa">추가 장보기 항목이 없어요.</p>
+                ) : (
+                  <ul className="list-inside list-disc space-y-1 text-cocoa-strong">
+                    {aiMealPlan.shoppingList.map((item, index) => (
+                      <li key={`${item}-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <h2 className="mb-3 mt-5 text-lg font-extrabold">🍽️ 간단 메뉴</h2>
+                {aiMealPlan.menus.length === 0 ? (
+                  <p className="text-cocoa">추천 메뉴가 없어요.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {aiMealPlan.menus.map((menu) => (
+                      <li
+                        key={`${menu.day}-${menu.menu}`}
+                        className="rounded-xl bg-white px-3 py-2 text-cocoa-strong"
+                      >
+                        {menu.day}일차: {menu.menu}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleSaveMealPlanImage()}
+                className={`w-full ${btnPrimary}`}
+              >
+                결과를 이미지로 저장 📷
+              </button>
+            </div>
+          )}
+
+          {!isAiLoading && !aiError && !aiMealPlan && (
+            <div className="space-y-3 rounded-2xl bg-cream px-4 py-6 text-center text-cocoa-strong">
+              <p>AI 식단을 생성해보세요.</p>
+              <button
+                type="button"
+                onClick={() => void handleGenerateAiMealPlan()}
+                className={`w-full ${btnPrimary}`}
+              >
+                AI 식단 생성하기
+              </button>
+            </div>
+          )}
+
+          <div className="mt-6 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPage('fridge')}
+              className={`flex-1 ${btnGhost}`}
+            >
+              식재료 관리로
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleGenerateAiMealPlan()}
+              className={`flex-1 ${btnPrimary}`}
+            >
+              다시 생성
+            </button>
           </div>
         </div>
       )}
