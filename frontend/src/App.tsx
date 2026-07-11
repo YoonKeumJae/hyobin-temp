@@ -411,10 +411,11 @@ function App() {
           <button
             onClick={() => {
               setPage('home')
-              const savedBirthDate = childInfo.birthDate
+              const savedBirthDate = saved?.childInfo.birthDate ?? childInfo.birthDate
               setChildInfo({ ...initialChildInfo, birthDate: savedBirthDate })
               setMealSettings(initialMealSettings)
               setSaved(null)
+              setFridgeItems([])
             }}
             className="mt-4 w-full rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
           >
