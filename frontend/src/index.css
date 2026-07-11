@@ -1,19 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #fffbe8;
-  --surface: #ffffff;
-  --surface-soft: #fff9dc;
-  --text: #5f5468;
-  --text-strong: #2f2640;
-  --border: #efe0a9;
-  --primary: #ff8a65;
-  --primary-hover: #ff7043;
-  --primary-soft: #fff0ea;
-  --shadow: 0 18px 40px rgba(196, 127, 99, 0.12);
+@theme {
+  --color-cream: #fff8ec;
+  --color-butter: #ffe8bf;
+  --color-butter-soft: #fff4d8;
+  --color-peach: #ffcfa8;
+  --color-coral: #ff9a76;
+  --color-coral-deep: #ff7f56;
+  --color-blush: #fff1ea;
+  --color-cocoa: #8a7a6d;
+  --color-cocoa-strong: #4a3d34;
 
-  font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: var(--text);
+  --color-mint: #d9f2df;
+  --color-mint-ink: #3f7d55;
+  --color-honey: #fde6b8;
+  --color-honey-ink: #a9781f;
+  --color-rose: #ffdfe0;
+  --color-rose-ink: #c85c60;
+}
+
+:root {
+  font: 18px/145% ui-rounded, 'Segoe UI Rounded', 'SF Pro Rounded', system-ui,
+    'Segoe UI', Roboto, sans-serif;
+  color: var(--color-cocoa);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -23,14 +32,18 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #fffef8 0%, #fffbe8 42%, #fff4cf 100%);
-  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #fff6df 0%, transparent 60%),
+    radial-gradient(1000px 500px at 110% 10%, #ffe3d0 0%, transparent 55%),
+    linear-gradient(180deg, #fffaf0 0%, #fff2df 100%);
+  background-attachment: fixed;
+  color: var(--color-cocoa);
 }
 
 h1,
 h2 {
-  color: var(--text-strong);
-  letter-spacing: -0.03em;
+  color: var(--color-cocoa-strong);
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
