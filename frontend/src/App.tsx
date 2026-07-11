@@ -499,29 +499,31 @@ function App() {
                 {fridgeItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded border p-3"
+                    className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 p-3 shadow-sm"
                   >
                     <div className="flex-1">
-                      <p className="font-medium">{item.name}</p>
+                      <p className="font-medium text-gray-800">{item.name}</p>
                       <p className="text-sm text-gray-600">{item.quantity}</p>
-                      <span
-                        className={`mt-1 inline-block rounded px-2 py-1 text-xs font-medium ${getStatusColor(
-                          item.status
-                        )}`}
-                      >
-                        {getStatusLabel(item.status)}
-                      </span>
+                      <div className="mt-2">
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${getStatusColor(
+                            item.status
+                          )}`}
+                        >
+                          {getStatusLabel(item.status)}
+                        </span>
+                      </div>
                     </div>
                     <div className="ml-3 flex gap-2">
                       <button
                         onClick={() => handleEditIngredient(item)}
-                        className="rounded-full bg-rose-500 px-3 py-1 text-sm font-medium text-white hover:bg-rose-600"
+                        className="rounded-full bg-rose-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-600 shadow-sm"
                       >
                         수정
                       </button>
                       <button
                         onClick={() => handleDeleteIngredient(item.id)}
-                        className="rounded-full bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700"
+                        className="rounded-full bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 shadow-sm"
                       >
                         삭제
                       </button>
