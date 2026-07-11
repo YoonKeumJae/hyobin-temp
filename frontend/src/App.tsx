@@ -76,7 +76,7 @@ function App() {
   const handleChildInfoSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (childInfo.birthDate) {
-      setSaved({ childInfo, mealSettings })
+      setSaved({ childInfo: { ...childInfo }, mealSettings: { ...mealSettings } })
       setEditingChildInfo(false)
       setNotification('저장되었습니다!')
       setTimeout(() => setNotification(''), 2000)
@@ -86,7 +86,7 @@ function App() {
 
   const handleMealSettingsSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setSaved({ childInfo, mealSettings })
+    setSaved({ childInfo: { ...childInfo }, mealSettings: { ...mealSettings } })
     setPage('fridge')
   }
 
@@ -183,7 +183,7 @@ function App() {
                 setPage('child-info')
                 setEditingChildInfo(true)
                 if (saved) {
-                  setChildInfo(saved.childInfo)
+                  setChildInfo({ ...saved.childInfo })
                 }
                 setIsMenuOpen(false)
               }}
@@ -268,7 +268,7 @@ function App() {
               <button
                 onClick={() => {
                   setEditingChildInfo(true)
-                  setChildInfo(saved.childInfo)
+                  setChildInfo(saved ? { ...saved.childInfo } : initialChildInfo)
                 }}
                 className="w-full rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
               >
