@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fff7f3;
+  --bg: #fffbe8;
   --surface: #ffffff;
-  --surface-soft: #fffaf7;
+  --surface-soft: #fff9dc;
   --text: #5f5468;
   --text-strong: #2f2640;
-  --border: #f1ddd4;
+  --border: #efe0a9;
   --primary: #ff8a65;
   --primary-hover: #ff7043;
   --primary-soft: #fff0ea;
@@ -23,7 +23,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #fffefe 0%, #fff7f3 42%, #fef1ea 100%);
+  background: radial-gradient(circle at top, #fffef8 0%, #fffbe8 42%, #fff4cf 100%);
   color: var(--text);
 }
 
