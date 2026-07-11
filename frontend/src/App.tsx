@@ -20,6 +20,12 @@ type Ingredient = {
   status: 'fresh' | 'soon' | 'expired'
 }
 
+type IngredientForm = {
+  name: string
+  quantity: string
+  status: Ingredient['status']
+}
+
 type Page = 'home' | 'child-info' | 'meal-settings' | 'result' | 'fridge'
 
 const initialChildInfo: ChildInfo = {
@@ -34,14 +40,15 @@ const initialMealSettings: MealSettings = {
   ingredients: '',
 }
 
-const initialIngredientForm = {
+const initialIngredientForm: IngredientForm = {
   name: '',
   quantity: '',
-  status: 'fresh' as const,
+  status: 'fresh',
 }
 
 function App() {
   const [page, setPage] = useState<Page>('home')
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [childInfo, setChildInfo] = useState<ChildInfo>(initialChildInfo)
   const [mealSettings, setMealSettings] = useState<MealSettings>(initialMealSettings)
   const [saved, setSaved] = useState<{
@@ -69,19 +76,18 @@ function App() {
   const handleChildInfoSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (childInfo.birthDate) {
-      setPage('meal-settings')
+      setSaved({ childInfo, mealSettings })
+      setEditingChildInfo(false)
+      setNotification('저장되었습니다!')
+      setTimeout(() => setNotification(''), 2000)
+      setPage('fridge')
     }
   }
 
   const handleMealSettingsSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setSaved({ childInfo, mealSettings })
-    setPage('result')
-  }
-
-  const handleReturnToHome = () => {
-    setPage('home')
-    setSaved(null)
+    setPage('fridge')
   }
 
   const handleIngredientFormChange =
@@ -153,12 +159,80 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="mx-auto max-w-2xl px-6 pb-24 pt-10 text-left">
+      <button
+        type="button"
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+        className="fixed left-4 top-4 z-40 w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white/60 backdrop-blur-sm text-lg font-semibold shadow-md"
+        aria-label="설정 메뉴 열기"
+      >
+        ⋯
+      </button>
+
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/20"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <div
+            className="absolute left-4 top-16 w-64 rounded-3xl border border-gray-200 bg-white p-3 shadow-2xl backdrop-blur-sm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setPage('child-info')
+                setEditingChildInfo(true)
+                if (saved) {
+                  setChildInfo(saved.childInfo)
+                }
+                setIsMenuOpen(false)
+              }}
+              className="w-full rounded-2xl px-3 py-2 text-left text-sm hover:bg-gray-50"
+            >
+              아이 정보 수정
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPage('meal-settings')
+                setIsMenuOpen(false)
+              }}
+              className="w-full rounded-2xl px-3 py-2 text-left text-sm hover:bg-gray-50"
+            >
+              식단 설정 수정
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPage('fridge')
+                setIsMenuOpen(false)
+              }}
+              className="w-full rounded-2xl px-3 py-2 text-left text-sm hover:bg-gray-50"
+            >
+              식재료 관리
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto max-w-2xl px-6 pb-10 pt-16 text-left">
+        <div className="rounded-2xl bg-white border border-gray-200 shadow-lg p-6">
         {page === 'home' && (
           <div>
             <h1 className="mb-6 text-3xl font-bold">홈</h1>
-            <div className="space-y-3">
-              <p className="text-gray-600">메뉴에서 "아이 정보" 탭을 선택하여 시작하세요.</p>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                홈에서 시작하면 아이 정보와 식재료 입력 화면으로 순서대로 이동합니다.
+              </p>
+              <button
+                onClick={() => {
+                  setPage('child-info')
+                  setEditingChildInfo(true)
+                }}
+                className="w-full rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
+              >
+                시작하기
+              </button>
             </div>
           </div>
         )}
@@ -196,22 +270,14 @@ function App() {
                   setEditingChildInfo(true)
                   setChildInfo(saved.childInfo)
                 }}
-                className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+                className="w-full rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
               >
                 수정
               </button>
             </div>
           ) : (
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (childInfo.birthDate) {
-                  setSaved({ childInfo, mealSettings })
-                  setEditingChildInfo(false)
-                  setNotification('저장되었습니다!')
-                  setTimeout(() => setNotification(''), 2000)
-                }
-              }}
+              onSubmit={handleChildInfoSubmit}
               className="space-y-4"
             >
               <label className="block">
@@ -262,14 +328,14 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setEditingChildInfo(false)}
-                    className="flex-1 rounded border px-4 py-2 font-medium hover:bg-gray-100"
+                    className="flex-1 rounded-full border border-gray-200 px-4 py-2 font-medium bg-white hover:bg-gray-50"
                   >
                     취소
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="flex-1 rounded bg-black px-4 py-2 font-medium text-white"
+                  className="flex-1 rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
                 >
                   저장
                 </button>
@@ -310,13 +376,13 @@ function App() {
               <button
                 type="button"
                 onClick={() => setPage('child-info')}
-                className="flex-1 rounded border px-4 py-2 font-medium hover:bg-gray-100"
+                className="flex-1 rounded-full border border-gray-200 px-4 py-2 font-medium bg-white hover:bg-gray-50"
               >
                 뒤로
               </button>
               <button
                 type="submit"
-                className="flex-1 rounded bg-black px-4 py-2 font-medium text-white"
+                className="flex-1 rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
               >
                 완료
               </button>
@@ -350,7 +416,7 @@ function App() {
               setMealSettings(initialMealSettings)
               setSaved(null)
             }}
-            className="mt-4 w-full rounded bg-black px-4 py-2 font-medium text-white"
+            className="mt-4 w-full rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
           >
             처음으로
           </button>
@@ -404,7 +470,7 @@ function App() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+                  className="flex-1 rounded-full bg-rose-500 px-4 py-2 font-medium text-white hover:bg-rose-600"
                 >
                   {editingId ? '수정' : '추가'}
                 </button>
@@ -415,7 +481,7 @@ function App() {
                       setEditingId(null)
                       setIngredientForm(initialIngredientForm)
                     }}
-                    className="flex-1 rounded border px-4 py-2 font-medium hover:bg-gray-100"
+                    className="flex-1 rounded-full border border-gray-200 px-4 py-2 font-medium bg-white hover:bg-gray-50"
                   >
                     취소
                   </button>
@@ -449,13 +515,13 @@ function App() {
                     <div className="ml-3 flex gap-2">
                       <button
                         onClick={() => handleEditIngredient(item)}
-                        className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
+                        className="rounded-full bg-rose-500 px-3 py-1 text-sm font-medium text-white hover:bg-rose-600"
                       >
                         수정
                       </button>
                       <button
                         onClick={() => handleDeleteIngredient(item.id)}
-                        className="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700"
+                        className="rounded-full bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700"
                       >
                         삭제
                       </button>
@@ -467,45 +533,9 @@ function App() {
           </div>
         </div>
       )}
+      </div>
     </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t bg-white">
-        <div className="mx-auto flex max-w-2xl">
-          <button
-            onClick={() => {
-              setPage('home')
-              setSaved(null)
-            }}
-            className={`flex-1 px-4 py-3 text-center font-medium ${
-              page === 'home'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600'
-            }`}
-          >
-            홈
-          </button>
-          <button
-            onClick={() => setPage('child-info')}
-            className={`flex-1 px-4 py-3 text-center font-medium ${
-              page === 'child-info'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600'
-            }`}
-          >
-            아이 정보
-          </button>
-          <button
-            onClick={() => setPage('fridge')}
-            className={`flex-1 px-4 py-3 text-center font-medium ${
-              page === 'fridge'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600'
-            }`}
-          >
-            냉장고 관리
-          </button>
-        </div>
-      </nav>
     </div>
   )
 }
