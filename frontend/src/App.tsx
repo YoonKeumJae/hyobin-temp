@@ -80,7 +80,11 @@ function App() {
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ??
+    (import.meta.env.DEV
+      ? 'http://localhost:3000'
+      : 'https://hyobin-backend-260711124822.azurewebsites.net')
 
   const handleChildInfoChange =
     (key: keyof ChildInfo) =>
