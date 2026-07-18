@@ -5,9 +5,13 @@ describe('AiMealPlanService', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    delete process.env.AI_PROVIDER;
     delete process.env.AI_API_KEY;
     delete process.env.AI_MODEL;
     delete process.env.AI_BASE_URL;
+    delete process.env.AZURE_OPENAI_ENDPOINT;
+    delete process.env.AZURE_OPENAI_DEPLOYMENT;
+    delete process.env.AZURE_OPENAI_API_VERSION;
   });
 
   it('builds prompt with allergy as hard rule and disliked foods as soft rule', async () => {
@@ -151,5 +155,54 @@ describe('AiMealPlanService', () => {
     expect(options.headers.Authorization).toBeUndefined();
     expect(body.model).toBeUndefined();
     expect(body.temperature).toBeUndefined();
+  });
+
+  it('uses responses endpoint payload and parses output_text when ai base url ends with /responses', async () => {
+    process.env.AI_API_KEY = 'response-key';
+    process.env.AI_BASE_URL = 'https://kid.services.ai.azure.com/openai/v1/responses';
+    process.env.AI_MODEL = 'gpt-5.4-nano';
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output_text: JSON.stringify({
+          shoppingList: ['계란', '우유 대체 두유'],
+          menus: [{ day: 1, menu: '계란찜' }],
+        }),
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const service = new AiMealPlanService();
+    const result = await service.generateMealPlan({
+      childInfo: {
+        birthDate: '2020-01-01',
+        dislikedFoods: '',
+        likedFoods: '계란',
+        allergies: '우유',
+      },
+      mealSettings: {
+        daysForMeal: '1',
+        ingredients: '계란',
+      },
+      fridgeItems: [],
+    });
+
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const options = fetchMock.mock.calls[0][1] as {
+      headers: Record<string, string>;
+      body: string;
+    };
+    const body = JSON.parse(options.body);
+
+    expect(calledUrl).toBe(
+      'https://kid.services.ai.azure.com/openai/v1/responses',
+    );
+    expect(options.headers['api-key']).toBe('response-key');
+    expect(options.headers.Authorization).toBeUndefined();
+    expect(body.input).toContain('알러지는 반드시 제외');
+    expect(body.model).toBe('gpt-5.4-nano');
+    expect(result.shoppingList).toEqual(['계란', '우유 대체 두유']);
+    expect(result.menus).toEqual([{ day: 1, menu: '계란찜' }]);
   });
 });

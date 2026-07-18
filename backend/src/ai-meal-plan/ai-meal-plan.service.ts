@@ -45,7 +45,7 @@ export class AiMealPlanService {
     }
 
     const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
+    const content = this.extractContent(data);
     const parsed = this.parseAiJson(content);
 
     return {
@@ -64,6 +64,10 @@ export class AiMealPlanService {
   }
 
   private resolveUrl(): string {
+    if (this.isResponsesApi()) {
+      return this.baseUrl;
+    }
+
     if (this.provider !== 'azure-openai') {
       return this.baseUrl;
     }
@@ -79,7 +83,7 @@ export class AiMealPlanService {
   }
 
   private resolveHeaders(): Record<string, string> {
-    if (this.provider === 'azure-openai') {
+    if (this.isResponsesApi() || this.provider === 'azure-openai') {
       return {
         'Content-Type': 'application/json',
         'api-key': this.apiKey ?? '',
@@ -93,6 +97,13 @@ export class AiMealPlanService {
   }
 
   private resolveRequestBody(prompt: string): Record<string, unknown> {
+    if (this.isResponsesApi()) {
+      return {
+        model: this.model,
+        input: prompt,
+      };
+    }
+
     const messages = [
       {
         role: 'system',
@@ -156,5 +167,43 @@ export class AiMealPlanService {
         return {};
       }
     }
+  }
+
+  private extractContent(data: unknown): string | undefined {
+    if (this.isResponsesApi()) {
+      if (typeof (data as { output_text?: unknown })?.output_text === 'string') {
+        return (data as { output_text: string }).output_text;
+      }
+
+      const output = (data as { output?: unknown[] })?.output;
+      if (!Array.isArray(output)) {
+        return undefined;
+      }
+
+      for (const item of output) {
+        const content = (item as { content?: unknown[] })?.content;
+        if (!Array.isArray(content)) {
+          continue;
+        }
+
+        for (const entry of content) {
+          if (typeof (entry as { text?: unknown })?.text === 'string') {
+            return (entry as { text: string }).text;
+          }
+        }
+      }
+
+      return undefined;
+    }
+
+    const choices = (data as { choices?: unknown[] })?.choices;
+    const firstChoice = Array.isArray(choices) ? choices[0] : undefined;
+    const message = (firstChoice as { message?: { content?: unknown } })?.message;
+    const content = message?.content;
+    return typeof content === 'string' ? content : undefined;
+  }
+
+  private isResponsesApi(): boolean {
+    return this.baseUrl.includes('/responses');
   }
 }
