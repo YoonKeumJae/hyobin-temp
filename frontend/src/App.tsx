@@ -709,11 +709,16 @@ function App() {
                 {aiMealPlan.shoppingList.length === 0 ? (
                   <p className="text-cocoa">추가 장보기 항목이 없어요.</p>
                 ) : (
-                  <ul className="list-inside list-disc space-y-1 text-cocoa-strong">
+                  <div className="space-y-2.5">
                     {aiMealPlan.shoppingList.map((item, index) => (
-                      <li key={`${item}-${index}`}>{item}</li>
+                      <div
+                        key={`${item}-${index}`}
+                        className="rounded-2xl border-2 border-white bg-white px-4 py-3 shadow-sm shadow-peach/20"
+                      >
+                        <p className="font-bold text-cocoa-strong">{item}</p>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
 
                 <h2 className="mb-3 mt-5 text-lg font-extrabold">🍽️ 간단 메뉴</h2>
