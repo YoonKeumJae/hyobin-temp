@@ -604,45 +604,47 @@ function App() {
           </div>
 
           <div>
-            <h2 className="mb-4 text-lg font-extrabold">🥕 재료 목록</h2>
+            <h2 className="mb-4 text-lg font-extrabold">🥕 장봐야 하는 재료들</h2>
             {fridgeItems.length === 0 ? (
               <div className="rounded-2xl bg-cream px-4 py-8 text-center text-cocoa">
                 <div className="mb-2 text-4xl">🫙</div>
                 아직 저장된 재료가 없어요.
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {fridgeItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between rounded-2xl border-2 border-butter bg-white p-4 shadow-sm shadow-peach/20"
+                    className="rounded-3xl border-2 border-butter bg-white p-4 shadow-sm shadow-peach/20"
                   >
-                    <div className="flex-1">
-                      <p className="font-extrabold text-cocoa-strong">{item.name}</p>
-                      <p className="text-sm text-cocoa">{item.quantity}</p>
-                      <div className="mt-2">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold ${getStatusColor(
-                            item.status
-                          )}`}
-                        >
-                          {getStatusLabel(item.status)}
-                        </span>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-lg font-extrabold text-cocoa-strong">{item.name}</p>
+                        <p className="mt-1 text-sm text-cocoa">{item.quantity}</p>
+                        <div className="mt-3">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold ${getStatusColor(
+                              item.status
+                            )}`}
+                          >
+                            {getStatusLabel(item.status)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-3 flex gap-2">
-                      <button
-                        onClick={() => handleEditIngredient(item)}
-                        className="rounded-full bg-coral px-3.5 py-1.5 text-sm font-bold text-white shadow-sm shadow-coral/30 transition hover:bg-coral-deep"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDeleteIngredient(item.id)}
-                        className="rounded-full bg-rose px-3.5 py-1.5 text-sm font-bold text-rose-ink transition hover:bg-rose-ink hover:text-white"
-                      >
-                        삭제
-                      </button>
+                      <div className="flex gap-2 sm:shrink-0">
+                        <button
+                          onClick={() => handleEditIngredient(item)}
+                          className="rounded-full bg-coral px-3.5 py-1.5 text-sm font-bold text-white shadow-sm shadow-coral/30 transition hover:bg-coral-deep"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteIngredient(item.id)}
+                          className="rounded-full bg-rose px-3.5 py-1.5 text-sm font-bold text-rose-ink transition hover:bg-rose-ink hover:text-white"
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
